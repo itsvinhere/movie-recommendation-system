@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}CineVault - Discover Movies{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+{% if trending %}
+{% set hero = trending[0] %}
+<section class="hero-section" style="background-image: linear-gradient(to right, rgba(0,0,0,0.9) 40%, transparent 100%), url('{{ hero.poster_url }}')">
+    <div class="hero-overlay"></div>
+    <div class="container-fluid px-4 hero-content">
+        <div class="hero-badge">🔥 Trending Now</div>
+        <h1 class="hero-title">{{ hero.title }}</h1>
+        <div class="hero-meta">
+            <span class="imdb-badge"><i class="bi bi-star-fill"></i> {{ hero.imdb_rating }}</span>
+            <span class="hero-year">{{ hero.release_year }}</span>
+            <span class="hero-genre">{{ hero.genre.split('|')[0] }}</span>
+        </div>
+        <p class="hero-overview">{{ hero.overview[:160] }}...</p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('main.movie_detail', movie_id=hero.id) }}" class="btn-play">
+                <i class="bi bi-play-fill"></i> Watch Now
+            </a>
+            <button class="btn-info" onclick="openMovieModal({{ hero.id }})">
+                <i class="bi bi-info-circle"></i> More Info
+            </button>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Mood Selector -->
+<section class="mood-section">
+    <div class="container-fluid px-4">
+        <h2 class="section-title">How are you feeling today?</h2>
+        <div class="mood-pills">
+            <button class="mood-pill {% if last_mood == 'happy' %}active{% endif %}" onclick="selectMood('happy')">😊 Happy</button>
+            <button class="mood-pill {% if last_mood == 'sad' %}active{% endif %}" onclick="selectMood('sad')">😢 Sad</button>
+            <button class="mood-pill {% if last_mood == 'action' %}active{% endif %}" onclick="selectMood('action')">💥 Action</button>
+            <button class="mood-pill {% if last_mood == 'romantic' %}active{% endif %}" onclick="selectMood('romantic')">❤️ Romantic</button>
+            <button class="mood-pill {% if last_mood == 'thriller' %}active{% endif %}" onclick="selectMood('thriller')">😱 Thriller</button>
+            <button class="mood-pill {% if last_mood == 'horror' %}active{% endif %}" onclick="selectMood('horror')">👻 Horror</button>
+            <button class="mood-pill {% if last_mood == 'drama' %}active{% endif %}" onclick="selectMood('drama')">🎭 Drama</button>
+        </div>
+    </div>
+</section>
+
+<!-- Mood Movies Row -->
+<div id="moodMoviesSection" class="{% if not mood_movies %}d-none{% endif %}">
+    <section class="movies-section">
+        <div class="container-fluid px-4">
+            <h2 class="section-title">Based on your mood <span id="currentMoodLabel">{% if last_mood %}• {{ last_mood|title }}{% endif %}</span></h2>
+            <div class="movies-row" id="moodMoviesRow">
+                {% for movie in mood_movies %}
+                {% include 'partials/movie_card.html' %}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Trending Movies -->
+<section class="movies-section">
+    <div class="container-fluid px-4">
+        <h2 class="section-title">🔥 Trending Now</h2>
+        <div class="movies-row">
+            {% for movie in trending %}
+            {% include 'partials/movie_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Top Rated -->
+<section class="movies-section">
+    <div class="container-fluid px-4">
+        <h2 class="section-title">⭐ Top Rated</h2>
+        <div class="movies-row">
+            {% for movie in top_rated %}
+            {% include 'partials/movie_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Recommended for You -->
+{% if session.get('user_id') and recommended %}
+<section class="movies-section">
+    <div class="container-fluid px-4">
+        <h2 class="section-title">🎯 Recommended for You</h2>
+        <div class="movies-row">
+            {% for movie in recommended %}
+            {% include 'partials/movie_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% elif not session.get('user_id') %}
+<section class="cta-section">
+    <div class="container text-center">
+        <h3>Get Personalized Recommendations</h3>
+        <p>Sign in to get movie recommendations based on your watch history and preferences.</p>
+        <a href="{{ url_for('auth.signup') }}" class="btn-play">Join CineVault Free</a>
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectMood(mood) {
+    // Update pill styling
+    document.querySelectorAll('.mood-pill').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+
+    const section = document.getElementById('moodMoviesSection');
+    const row = document.getElementById('moodMoviesRow');
+    const label = document.getElementById('currentMoodLabel');
+
+    row.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+    section.classList.remove('d-none');
+    label.textContent = `• ${mood.charAt(0).toUpperCase() + mood.slice(1)}`;
+
+    fetch(`/api/recommend?mood=${mood}`)
+        .then(r => r.json())
+        .then(data => {
+            row.innerHTML = '';
+            if (data.results && data.results.length > 0) {
+                data.results.forEach(movie => {
+                    row.innerHTML += createMovieCard(movie);
+                });
+            } else {
+                row.innerHTML = '<p class="text-muted">No movies found for this mood.</p>';
+            }
+        })
+        .catch(() => {
+            row.innerHTML = '<p class="text-danger">Error loading movies.</p>';
+        });
+}
+</script>
+{% endblock %}

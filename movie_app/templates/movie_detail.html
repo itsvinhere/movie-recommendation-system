@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}{{ movie.title }} - CineVault{% endblock %}
+
+{% block content %}
+<div class="movie-detail-page">
+
+    <!-- Hero Backdrop -->
+    <div class="detail-backdrop" style="background-image: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(15,15,15,1) 100%), url('{{ movie.poster_url }}')">
+    </div>
+
+    <div class="container-fluid px-4 detail-container">
+        <div class="row">
+
+            <!-- Poster -->
+            <div class="col-md-3 col-lg-2 mb-4">
+                <div class="detail-poster-wrap">
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="detail-poster"
+                         onerror="this.src='https://via.placeholder.com/300x450/1a1a2e/e50914?text=No+Image'">
+                </div>
+            </div>
+
+            <!-- Info -->
+            <div class="col-md-9 col-lg-10">
+                <div class="detail-info">
+                    <div class="detail-badges mb-3">
+                        <span class="badge-year">{{ movie.release_year }}</span>
+                        {% for g in movie.genre.split('|') %}
+                        <span class="badge-genre">{{ g.strip() }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <h1 class="detail-title">{{ movie.title }}</h1>
+
+                    <div class="detail-meta">
+                        <div class="imdb-score">
+                            <i class="bi bi-star-fill"></i>
+                            <span class="score-num">{{ movie.imdb_rating }}</span>
+                            <span class="score-label">/10 IMDb</span>
+                        </div>
+                    </div>
+
+                    <p class="detail-overview">{{ movie.overview }}</p>
+
+                    <div class="detail-actions">
+                        {% if movie.trailer_url %}
+                        <button class="btn-play" data-bs-toggle="modal" data-bs-target="#trailerModal">
+                            <i class="bi bi-play-fill"></i> Watch Trailer
+                        </button>
+                        {% endif %}
+                        <button class="btn-wishlist" onclick="showToast('Added to My List!')">
+                            <i class="bi bi-plus-lg"></i> My List
+                        </button>
+                        <button class="btn-share" onclick="navigator.share ? navigator.share({title:'{{ movie.title }}', url: window.location.href}) : showToast('Link copied!')">
+                            <i class="bi bi-share"></i> Share
+                        </button>
+                    </div>
+
+                    <!-- Cast -->
+                    <div class="cast-section mt-4">
+                        <h4 class="sub-section-title">Cast</h4>
+                        <div class="cast-grid">
+                            {% for member in cast_list %}
+                            <div class="cast-card">
+                                <div class="cast-avatar">{{ member.actor[0] }}</div>
+                                <div class="cast-info">
+                                    <div class="cast-actor">{{ member.actor }}</div>
+                                    <div class="cast-character">{{ member.character }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Trailer Embed -->
+        {% if movie.trailer_url %}
+        <div class="trailer-section mt-4">
+            <h4 class="sub-section-title">Official Trailer</h4>
+            <div class="trailer-wrapper">
+                <iframe src="{{ movie.trailer_url }}" 
+                        title="{{ movie.title }} Trailer"
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Similar Movies -->
+        {% if similar %}
+        <section class="movies-section mt-5">
+            <h2 class="section-title">More Like This</h2>
+            <div class="movies-row">
+                {% for movie in similar %}
+                {% include 'partials/movie_card.html' %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Trailer Modal -->
+{% if movie.trailer_url %}
+<div class="modal fade" id="trailerModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white">{{ movie.title }} — Trailer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="trailer-wrapper">
+                    <iframe id="trailerIframe" src="{{ movie.trailer_url }}?autoplay=1"
+                            frameborder="0" allowfullscreen
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Stop trailer when modal closes
+document.getElementById('trailerModal')?.addEventListener('hide.bs.modal', function () {
+    const iframe = document.getElementById('trailerIframe');
+    if (iframe) iframe.src = iframe.src;
+});
+</script>
+{% endblock %}

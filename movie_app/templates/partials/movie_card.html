@@ -1,0 +1,24 @@
+<div class="movie-card" onclick="window.location.href='/movie/{{ movie.id }}'">
+    <div class="movie-poster-wrap">
+        <img src="{{ movie.poster_url }}" 
+             alt="{{ movie.title }}" 
+             class="movie-poster"
+             onerror="this.src='https://via.placeholder.com/300x450/1a1a2e/e50914?text={{ movie.title|urlencode }}'">
+        <div class="movie-overlay">
+            <div class="movie-overlay-content">
+                <a href="{{ url_for('main.movie_detail', movie_id=movie.id) }}" class="btn-play-sm">
+                    <i class="bi bi-play-fill"></i>
+                </a>
+                <div class="movie-quick-info">
+                    <span class="rating-badge"><i class="bi bi-star-fill"></i> {{ movie.imdb_rating }}</span>
+                    <span class="year-badge">{{ movie.release_year }}</span>
+                </div>
+                <p class="movie-overview-preview">{{ movie.overview[:100] if movie.overview else '' }}...</p>
+            </div>
+        </div>
+    </div>
+    <div class="movie-info">
+        <h6 class="movie-title">{{ movie.title }}</h6>
+        <div class="movie-genre">{{ movie.genre.split('|')[0] if movie.genre else 'Movie' }}</div>
+    </div>
+</div>

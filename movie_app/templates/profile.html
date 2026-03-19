@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}My Profile - CineVault{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="container-fluid px-4">
+
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar-lg">{{ session.username[0].upper() }}</div>
+            <div class="profile-info">
+                <h1 class="profile-name">{{ session.username }}</h1>
+                <p class="profile-subtitle">CineVault Member</p>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Watch History -->
+            <div class="col-lg-8 mb-4">
+                <div class="profile-card">
+                    <h3 class="profile-card-title"><i class="bi bi-clock-history me-2"></i>Recently Watched</h3>
+                    {% if history %}
+                    <div class="history-list">
+                        {% for movie in history %}
+                        <a href="{{ url_for('main.movie_detail', movie_id=movie.id) }}" class="history-item">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="history-thumb"
+                                 onerror="this.src='https://via.placeholder.com/60x90/1a1a2e/e50914?text=?'">
+                            <div class="history-info">
+                                <div class="history-title">{{ movie.title }}</div>
+                                <div class="history-meta">
+                                    <span><i class="bi bi-star-fill text-warning"></i> {{ movie.imdb_rating }}</span>
+                                    <span>{{ movie.release_year }}</span>
+                                    <span class="text-muted">{{ movie.timestamp[:10] }}</span>
+                                </div>
+                            </div>
+                            <i class="bi bi-chevron-right history-arrow"></i>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">🎬</div>
+                        <p>No watch history yet. <a href="{{ url_for('main.index') }}">Start exploring!</a></p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4 mb-4">
+                <!-- Search History -->
+                <div class="profile-card mb-4">
+                    <h3 class="profile-card-title"><i class="bi bi-search me-2"></i>Search History</h3>
+                    {% if search_history %}
+                    <div class="search-hist-list">
+                        {% for item in search_history %}
+                        <a href="{{ url_for('main.search') }}?q={{ item.query }}" class="search-hist-item">
+                            <i class="bi bi-search text-muted me-2"></i>
+                            {{ item.query }}
+                            <span class="text-muted ms-auto">{{ item.timestamp[:10] }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p class="text-muted">No searches yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Mood Preference -->
+                <div class="profile-card">
+                    <h3 class="profile-card-title"><i class="bi bi-emoji-smile me-2"></i>Pick a Mood</h3>
+                    <p class="text-muted small mb-3">Get recommendations based on how you feel</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for mood, emoji in [('happy','😊'),('sad','😢'),('action','💥'),('romantic','❤️'),('thriller','😱'),('horror','👻'),('drama','🎭')] %}
+                        <a href="{{ url_for('main.index') }}#mood" onclick="localStorage.setItem('selectedMood','{{ mood }}')"
+                           class="mood-pill-sm">{{ emoji }} {{ mood|title }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

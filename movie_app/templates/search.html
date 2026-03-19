@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{% if query %}Search: {{ query }}{% else %}Browse Movies{% endif %} - CineVault{% endblock %}
+
+{% block content %}
+<div class="search-page">
+    <div class="container-fluid px-4">
+
+        <!-- Search Header -->
+        <div class="search-header">
+            <h1 class="search-page-title">
+                {% if query %}
+                    Results for "<span class="accent-text">{{ query }}</span>"
+                {% else %}
+                    Browse Movies
+                {% endif %}
+            </h1>
+
+            <!-- Big search bar -->
+            <form action="{{ url_for('main.search') }}" method="get" class="big-search-form">
+                <div class="big-search-wrap">
+                    <i class="bi bi-search big-search-icon"></i>
+                    <input type="text" name="q" class="big-search-input"
+                           placeholder="Search by title, genre, actor..."
+                           value="{{ query }}" autofocus>
+                    <button type="submit" class="big-search-btn">Search</button>
+                </div>
+            </form>
+
+            <!-- Mood quick filters -->
+            <div class="search-mood-filters">
+                <span class="filter-label">Quick filters:</span>
+                {% for mood, emoji in [('action','💥'),('romantic','❤️'),('thriller','😱'),('happy','😊'),('sad','😢'),('horror','👻')] %}
+                <a href="{{ url_for('main.search') }}?q={{ mood }}" class="mood-filter-chip {% if query == mood %}active{% endif %}">
+                    {{ emoji }} {{ mood|title }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Results -->
+        {% if query %}
+            {% if results %}
+            <div class="results-count">{{ results|length }} movie{{ 's' if results|length != 1 }} found</div>
+            <div class="movies-grid">
+                {% for movie in results %}
+                {% include 'partials/movie_card.html' %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-results">
+                <div class="no-results-icon">🎬</div>
+                <h3>No movies found for "{{ query }}"</h3>
+                <p>Try a different search term or browse our collection below.</p>
+            </div>
+            {% endif %}
+        {% else %}
+        <!-- Browse all -->
+        <div class="movies-grid" id="browseGrid">
+            <!-- Load via JS -->
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if not query %}
+<script>
+fetch('/api/trending')
+    .then(r => r.json())
+    .then(data => {
+        const grid = document.getElementById('browseGrid');
+        if (data.results) {
+            data.results.forEach(m => {
+                grid.innerHTML += createMovieCard(m);
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

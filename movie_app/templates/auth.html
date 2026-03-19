@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == 'login' %}Sign In{% else %}Join CineVault{% endif %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-backdrop"></div>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo mb-4">CINE<span class="logo-accent">VAULT</span></div>
+
+            <div class="auth-tabs mb-4">
+                <button class="auth-tab {% if mode == 'login' %}active{% endif %}" onclick="switchTab('login')">Sign In</button>
+                <button class="auth-tab {% if mode == 'signup' %}active{% endif %}" onclick="switchTab('signup')">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="auth-form {% if mode != 'login' %}d-none{% endif %}">
+                <h2 class="auth-title">Welcome back</h2>
+                <p class="auth-subtitle">Sign in to continue watching</p>
+
+                <div class="form-group mb-3">
+                    <label class="form-label-custom">Email</label>
+                    <input type="email" id="loginEmail" class="form-control-custom" placeholder="your@email.com">
+                </div>
+                <div class="form-group mb-4">
+                    <label class="form-label-custom">Password</label>
+                    <div class="password-wrap">
+                        <input type="password" id="loginPassword" class="form-control-custom" placeholder="••••••••">
+                        <button type="button" class="toggle-password" onclick="togglePassword('loginPassword')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="loginError" class="alert-custom d-none"></div>
+
+                <button class="btn-auth" onclick="handleLogin()">
+                    <span id="loginBtnText">Sign In</span>
+                    <div id="loginSpinner" class="btn-spinner d-none"></div>
+                </button>
+
+                <p class="auth-switch mt-3">Don't have an account? <a href="#" onclick="switchTab('signup')">Sign up free</a></p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" class="auth-form {% if mode != 'signup' %}d-none{% endif %}">
+                <h2 class="auth-title">Join CineVault</h2>
+                <p class="auth-subtitle">Create your free account</p>
+
+                <div class="form-group mb-3">
+                    <label class="form-label-custom">Username</label>
+                    <input type="text" id="signupUsername" class="form-control-custom" placeholder="Choose a username">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label-custom">Email</label>
+                    <input type="email" id="signupEmail" class="form-control-custom" placeholder="your@email.com">
+                </div>
+                <div class="form-group mb-4">
+                    <label class="form-label-custom">Password</label>
+                    <div class="password-wrap">
+                        <input type="password" id="signupPassword" class="form-control-custom" placeholder="Min. 6 characters">
+                        <button type="button" class="toggle-password" onclick="togglePassword('signupPassword')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="signupError" class="alert-custom d-none"></div>
+                <div id="signupSuccess" class="alert-success-custom d-none"></div>
+
+                <button class="btn-auth" onclick="handleSignup()">
+                    <span id="signupBtnText">Create Account</span>
+                    <div id="signupSpinner" class="btn-spinner d-none"></div>
+                </button>
+
+                <p class="auth-switch mt-3">Already have an account? <a href="#" onclick="switchTab('login')">Sign in</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(tab) {
+    if (tab === 'login') {
+        document.getElementById('loginForm').classList.remove('d-none');
+        document.getElementById('signupForm').classList.add('d-none');
+    } else {
+        document.getElementById('signupForm').classList.remove('d-none');
+        document.getElementById('loginForm').classList.add('d-none');
+    }
+    document.querySelectorAll('.auth-tab').forEach((t, i) => {
+        t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'signup' && i === 1));
+    });
+}
+
+function togglePassword(id) {
+    const input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const err = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtnText');
+    const spin = document.getElementById('loginSpinner');
+
+    err.classList.add('d-none');
+    btn.classList.add('d-none'); spin.classList.remove('d-none');
+
+    fetch('/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email, password})
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.classList.remove('d-none'); spin.classList.add('d-none');
+        if (data.success) {
+            window.location.href = '/';
+        } else {
+            err.textContent = data.message;
+            err.classList.remove('d-none');
+        }
+    })
+    .catch(() => {
+        btn.classList.remove('d-none'); spin.classList.add('d-none');
+        err.textContent = 'Network error. Please try again.';
+        err.classList.remove('d-none');
+    });
+}
+
+function handleSignup() {
+    const username = document.getElementById('signupUsername').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const err = document.getElementById('signupError');
+    const succ = document.getElementById('signupSuccess');
+    const btn = document.getElementById('signupBtnText');
+    const spin = document.getElementById('signupSpinner');
+
+    err.classList.add('d-none'); succ.classList.add('d-none');
+    btn.classList.add('d-none'); spin.classList.remove('d-none');
+
+    fetch('/signup', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username, email, password})
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.classList.remove('d-none'); spin.classList.add('d-none');
+        if (data.success) {
+            succ.textContent = 'Account created! Redirecting...';
+            succ.classList.remove('d-none');
+            setTimeout(() => window.location.href = '/', 1200);
+        } else {
+            err.textContent = data.message;
+            err.classList.remove('d-none');
+        }
+    })
+    .catch(() => {
+        btn.classList.remove('d-none'); spin.classList.add('d-none');
+        err.textContent = 'Network error. Please try again.';
+        err.classList.remove('d-none');
+    });
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        if (!document.getElementById('loginForm').classList.contains('d-none')) handleLogin();
+        else handleSignup();
+    }
+});
+</script>
+{% endblock %}
